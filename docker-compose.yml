@@ -1,0 +1,36 @@
+version: '2.27'
+
+services:
+  postgresdb:
+    image: postgres:13.1
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    container_name: postgresdb
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=$POSTGRESDB_USER
+      - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
+      - POSTGRES_DB=$POSTGRESDB_DATABASE
+    volumes:
+      - db:/var/lib/postgres
+  app:
+    depends_on:
+      - postgresdb
+    build:
+        context: ./.
+        dockerfile: Dockerfile
+    restart: on-failure
+    env_file:
+      - ./.env
+    ports:
+      - "8080:8080"
+    environment:
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresdb:5432/$POSTGRESDB_DATABASE
+        - SPRING_DATASOURCE_USERNAME=$POSTGRESDB_USER
+        - SPRING_DATASOURCE_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
+        - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+volumes:
+    db:
